@@ -22,6 +22,8 @@ Otherwise:
 mvn spring-boot:run
 ```
 
+Web UI will be available at `http://localhost:8081/` (served from `src/main/resources/static/index.html`).
+
 API base: `http://localhost:8081`
 
 H2 console: `http://localhost:8081/h2-console`

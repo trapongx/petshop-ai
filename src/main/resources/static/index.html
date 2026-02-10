@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pet Shop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --bg-alt: #020617;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --border: #334155;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --danger-soft: rgba(248, 113, 113, 0.14);
+      --radius: 0.75rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: radial-gradient(circle at top, #1d283a 0, #020617 45%, #000 100%);
+      color: var(--text);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      max-width: 1120px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 800px) {
+      body {
+        padding: 16px;
+      }
+      .app {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 55%),
+                  radial-gradient(circle at bottom right, rgba(30, 64, 175, 0.2), transparent 65%),
+                  linear-gradient(145deg, #020617, #020617 20%, #020617 60%, #020617);
+      border-radius: var(--radius);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(18px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 55%);
+      opacity: 0.9;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .panel-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: radial-gradient(circle at top, rgba(148, 163, 184, 0.25), transparent 60%);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .panel-subtitle {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      color: #a5f3fc;
+      background: radial-gradient(circle at top left, rgba(34, 197, 235, 0.3), transparent 60%);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    th,
+    td {
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.95);
+    }
+
+    th:last-child,
+    td:last-child {
+      text-align: right;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: background 0.12s ease, transform 0.08s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(15, 23, 42, 0.8);
+      transform: translateY(-1px);
+    }
+
+    .pet-name {
+      font-weight: 500;
+    }
+
+    .pet-meta {
+      display: inline-flex;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.85);
+      font-size: 11px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .actions {
+      display: inline-flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    button {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 4px 10px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.15), transparent 60%),
+                  rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+    }
+
+    button:hover {
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.25), transparent 60%),
+                  rgba(15, 23, 42, 0.95);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.1);
+      transform: translateY(-0.5px);
+    }
+
+    button.danger {
+      border-color: rgba(248, 113, 113, 0.5);
+      background: radial-gradient(circle at top left, rgba(248, 113, 113, 0.25), transparent 60%),
+                  rgba(24, 24, 27, 0.95);
+      color: #fecaca;
+    }
+
+    button.danger:hover {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.2);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 12px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 7px 9px;
+      font-size: 13px;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    input[readonly] {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .form-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .form-footer-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .tag {
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.85);
+    }
+
+    .error-banner {
+      display: none;
+      margin-top: 6px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: var(--danger-soft);
+      border: 1px solid rgba(248, 113, 113, 0.55);
+      color: #fecaca;
+      font-size: 11px;
+    }
+
+    .error-banner.visible {
+      display: block;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .empty-state {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 16px 4px 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel">
+      <div class="panel-inner">
+        <header class="panel-header">
+          <div>
+            <div class="panel-title">
+              Pet inventory
+              <span class="badge">REST-backed UI</span>
+            </div>
+            <p class="panel-subtitle">Live view of pets backed by `/pets` API.</p>
+          </div>
+          <span class="status-pill">
+            <span class="status-dot"></span>
+            Connected
+          </span>
+        </header>
+
+        <div id="pets-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Pet</th>
+                <th>Meta</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pets-body">
+              <!-- rows inserted by JS -->
+            </tbody>
+          </table>
+          <div id="empty-state" class="empty-state" style="display: none;">
+            No pets yet. Use the form on the right to add your first pet.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-inner">
+        <header class="panel-header">
+          <div>
+            <div class="panel-title">
+              Edit / create pet
+            </div>
+            <p class="panel-subtitle">
+              Simple CRUD over the same REST API the backend exposes.
+            </p>
+          </div>
+        </header>
+
+        <form id="pet-form" onsubmit="return false;">
+          <div class="form-grid">
+            <div class="field">
+              <label for="pet-id">ID</label>
+              <input id="pet-id" name="id" type="number" readonly />
+            </div>
+
+            <div class="field">
+              <label for="pet-name">Name</label>
+              <input id="pet-name" name="name" type="text" autocomplete="off" required />
+            </div>
+
+            <div class="field">
+              <label for="pet-type">Type</label>
+              <input id="pet-type" name="type" type="text" autocomplete="off" required />
+            </div>
+
+            <div class="field">
+              <label for="pet-age">Age</label>
+              <input id="pet-age" name="age" type="number" min="0" required />
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <div class="form-footer-left">
+              <span class="tag">POST / PUT / DELETE</span>
+              <span class="muted">Backed by `PetController`.</span>
+            </div>
+            <div class="actions">
+              <button type="button" id="reset-btn">Reset</button>
+              <button type="button" id="create-btn">Create</button>
+              <button type="button" id="update-btn">Update</button>
+            </div>
+          </div>
+
+          <div id="error-banner" class="error-banner"></div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API_BASE = "/pets";
+
+    const petsBody = document.getElementById("pets-body");
+    const emptyState = document.getElementById("empty-state");
+    const errorBanner = document.getElementById("error-banner");
+
+    const idInput = document.getElementById("pet-id");
+    const nameInput = document.getElementById("pet-name");
+    const typeInput = document.getElementById("pet-type");
+    const ageInput = document.getElementById("pet-age");
+
+    const resetBtn = document.getElementById("reset-btn");
+    const createBtn = document.getElementById("create-btn");
+    const updateBtn = document.getElementById("update-btn");
+
+    function showError(message) {
+      console.error(message);
+      errorBanner.textContent = message;
+      errorBanner.classList.add("visible");
+    }
+
+    function clearError() {
+      errorBanner.textContent = "";
+      errorBanner.classList.remove("visible");
+    }
+
+    async function fetchJson(url, options) {
+      clearError();
+      try {
+        const response = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(options && options.headers),
+          },
+          ...options,
+        });
+
+        if (!response.ok) {
+          let bodyText;
+          try {
+            bodyText = await response.text();
+          } catch (e) {
+            bodyText = "";
+          }
+          throw new Error("Request failed with " + response.status + " " + response.statusText + (bodyText ? ": " + bodyText : ""));
+        }
+
+        if (response.status === 204) {
+          return null;
+        }
+
+        const text = await response.text();
+        if (!text) {
+          return null;
+        }
+        return JSON.parse(text);
+      } catch (err) {
+        showError(err.message || String(err));
+        throw err;
+      }
+    }
+
+    function renderPets(pets) {
+      petsBody.innerHTML = "";
+
+      if (!pets || pets.length === 0) {
+        emptyState.style.display = "block";
+        return;
+      }
+
+      emptyState.style.display = "none";
+
+      for (const pet of pets) {
+        const tr = document.createElement("tr");
+
+        const idTd = document.createElement("td");
+        idTd.textContent = String(pet.id ?? "");
+        tr.appendChild(idTd);
+
+        const nameTd = document.createElement("td");
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "pet-name";
+        nameDiv.textContent = pet.name ?? "";
+        nameTd.appendChild(nameDiv);
+        tr.appendChild(nameTd);
+
+        const metaTd = document.createElement("td");
+        const meta = document.createElement("div");
+        meta.className = "pet-meta";
+
+        const typeBadge = document.createElement("span");
+        typeBadge.className = "pill";
+        typeBadge.textContent = pet.type ?? "";
+        meta.appendChild(typeBadge);
+
+        const ageBadge = document.createElement("span");
+        ageBadge.className = "pill";
+        ageBadge.textContent = (pet.age ?? "?") + " yrs";
+        meta.appendChild(ageBadge);
+
+        metaTd.appendChild(meta);
+        tr.appendChild(metaTd);
+
+        const actionsTd = document.createElement("td");
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", () => {
+          populateForm(pet);
+        });
+        actions.appendChild(editBtn);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.classList.add("danger");
+        deleteBtn.addEventListener("click", async () => {
+          if (!confirm("Delete pet #" + pet.id + " (" + pet.name + ")?")) {
+            return;
+          }
+          await deletePet(pet.id);
+          await loadPets();
+          if (idInput.value && String(pet.id) === idInput.value) {
+            resetForm();
+          }
+        });
+        actions.appendChild(deleteBtn);
+
+        actionsTd.appendChild(actions);
+        tr.appendChild(actionsTd);
+
+        petsBody.appendChild(tr);
+      }
+    }
+
+    function populateForm(pet) {
+      clearError();
+      idInput.value = pet.id ?? "";
+      nameInput.value = pet.name ?? "";
+      typeInput.value = pet.type ?? "";
+      ageInput.value = pet.age ?? "";
+    }
+
+    function resetForm() {
+      clearError();
+      idInput.value = "";
+      nameInput.value = "";
+      typeInput.value = "";
+      ageInput.value = "";
+    }
+
+    async function loadPets() {
+      const pets = await fetchJson(API_BASE);
+      renderPets(pets || []);
+    }
+
+    async function createPet() {
+      const body = {
+        name: nameInput.value.trim(),
+        type: typeInput.value.trim(),
+        age: Number(ageInput.value || 0),
+      };
+
+      if (!body.name || !body.type || Number.isNaN(body.age)) {
+        showError("Please provide name, type and age.");
+        return;
+      }
+
+      await fetchJson(API_BASE, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+
+      resetForm();
+      await loadPets();
+    }
+
+    async function updatePet() {
+      const id = idInput.value;
+      if (!id) {
+        showError("Select a pet to update (use the Edit button).");
+        return;
+      }
+
+      const body = {
+        id: Number(id),
+        name: nameInput.value.trim(),
+        type: typeInput.value.trim(),
+        age: Number(ageInput.value || 0),
+      };
+
+      if (!body.name || !body.type || Number.isNaN(body.age)) {
+        showError("Please provide name, type and age.");
+        return;
+      }
+
+      await fetchJson(API_BASE + "/" + encodeURIComponent(id), {
+        method: "PUT",
+        body: JSON.stringify(body),
+      });
+
+      await loadPets();
+    }
+
+    async function deletePet(id) {
+      await fetchJson(API_BASE + "/" + encodeURIComponent(id), {
+        method: "DELETE",
+      });
+    }
+
+    resetBtn.addEventListener("click", resetForm);
+    createBtn.addEventListener("click", () => {
+      createPet().catch(() => {});
+    });
+    updateBtn.addEventListener("click", () => {
+      updatePet().catch(() => {});
+    });
+
+    loadPets().catch(() => {});
+  </script>
+</body>
+</html>
+
